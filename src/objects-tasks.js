@@ -339,33 +339,146 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
+class Element {
+  idCounter = 0;
+
+  elementCounter = 0;
+
+  pseudoElementCounter = 0;
+
+  priority = 0;
+
+  textExceptionUniq =
+    'Element, id and pseudo-element should not occur more then one time inside the selector';
+
+  textExceptionPriority =
+    'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element';
+
+  constructor(
+    selector = '',
+    priority = 0,
+    idCounter = 0,
+    elementCounter = 0,
+    pseudoElementCounter = 0
+  ) {
+    this.selector = selector;
+    this.idCounter = idCounter;
+    this.elementCounter = elementCounter;
+    this.pseudoElementCounter = pseudoElementCounter;
+    this.priority = priority;
+  }
+
+  element(value) {
+    const currentPriority = 0;
+    if (this.elementCounter > 0) {
+      throw new Error(this.textExceptionUniq);
+    }
+    if (currentPriority < this.priority) {
+      throw new Error(this.textExceptionPriority);
+    }
+    return new Element(
+      `${this.selector}${value}`,
+      currentPriority,
+      this.idCounter,
+      this.elementCounter + 1,
+      this.pseudoElementCounter
+    );
+  }
+
+  id(value) {
+    const currentPriority = 1;
+    if (this.idCounter > 0) {
+      throw new Error(this.textExceptionUniq);
+    }
+    if (currentPriority < this.priority) {
+      throw new Error(this.textExceptionPriority);
+    }
+    return new Element(
+      `${this.selector}#${value}`,
+      currentPriority,
+      this.idCounter + 1,
+      this.elementCounter,
+      this.pseudoElementCounter
+    );
+  }
+
+  class(value) {
+    const currentPriority = 2;
+    if (currentPriority < this.priority) {
+      throw new Error(this.textExceptionPriority);
+    }
+    return new Element(`${this.selector}.${value}`, currentPriority);
+  }
+
+  attr(value) {
+    const currentPriority = 3;
+    if (currentPriority < this.priority) {
+      throw new Error(this.textExceptionPriority);
+    }
+    return new Element(`${this.selector}[${value}]`, currentPriority);
+  }
+
+  pseudoClass(value) {
+    const currentPriority = 4;
+    if (currentPriority < this.priority) {
+      throw new Error(this.textExceptionPriority);
+    }
+    return new Element(`${this.selector}:${value}`, currentPriority);
+  }
+
+  pseudoElement(value) {
+    const currentPriority = 5;
+    if (this.pseudoElementCounter > 0) {
+      throw new Error(this.textExceptionUniq);
+    }
+    return new Element(
+      `${this.selector}::${value}`,
+      currentPriority,
+      this.idCounter,
+      this.elementCounter,
+      this.pseudoElementCounter + 1
+    );
+  }
+
+  combine(combinator, selector) {
+    return new Element(
+      `${this.selector} ${combinator} ${selector.selector}`,
+      this.priority
+    );
+  }
+
+  stringify() {
+    return this.selector;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new Element().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new Element().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new Element().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new Element().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new Element().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new Element().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return selector1.combine(combinator, selector2);
   },
 };
 
